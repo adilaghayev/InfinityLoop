@@ -25,7 +25,7 @@ public class LevelManager : MonoBehaviour
 
     private GameObject foreground;
 
-    private int levelNumber = 0;
+    private int levelNumber = 1;
 
     private void Awake()
     {
@@ -173,7 +173,7 @@ public class LevelManager : MonoBehaviour
         {
 
 
-            StartCoroutine(RestartLevelCOR());
+            StartCoroutine(RestartLevelCOR(levelNumber));
 
             
         }
@@ -213,9 +213,12 @@ public class LevelManager : MonoBehaviour
         puzzle.currentCondition = GetCurrentCondition();
 
         Camera.main.transform.position = new Vector3(puzzle.width / 2f - .5f, puzzle.height / 2f - .5f, -10);
+
+        foreground = GameObject.FindGameObjectWithTag("Foreground");
+
     }
 
-    IEnumerator RestartLevelCOR()
+    IEnumerator RestartLevelCOR(int level)
     {
         Debug.Log("Level Passed!");
 
@@ -226,11 +229,14 @@ public class LevelManager : MonoBehaviour
 
         yield return new WaitForSeconds(1f);
 
-        SceneManager.UnloadSceneAsync("Level_1");
+        SceneManager.UnloadSceneAsync(level);
 
-        SceneManager.LoadScene("Level_2", LoadSceneMode.Additive);
+        SceneManager.LoadScene(level+1, LoadSceneMode.Additive);
 
         yield return new WaitForSeconds(.1f);
+
+        levelNumber++;
+
         RestartLevel();
     }
 
