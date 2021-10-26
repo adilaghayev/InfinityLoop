@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 public class LevelManager : MonoBehaviour
 {
 
-
+    
     [System.Serializable]
     public class Puzzle
     {
@@ -23,19 +23,57 @@ public class LevelManager : MonoBehaviour
 
     public bool generate = true;
 
-    private GameObject foreground;
+    public GameObject optionalModes;
+    public GameObject mainMode;
+    public GameObject originalMode;
 
+    private GameObject foreground;
+    
+
+    private int progressionLevel = 1;
     private int levelNumber = 1;
 
     private void Awake()
     {
-        SceneManager.LoadSceneAsync(1, LoadSceneMode.Additive);
+
+#if UNITY_EDITOR
+        PlayerPrefs.DeleteAll();
+        progressionLevel = 4;
+#endif
+
+        if (PlayerPrefs.HasKey("levels_completed"))
+        {
+            progressionLevel = PlayerPrefs.GetInt("levels_completed") + 1;
+
+        }
+
+        else
+        {
+            PlayerPrefs.SetInt("levels_completed", 0);
+            PlayerPrefs.Save();
+        }
+
+        if (progressionLevel < 4)
+
+        {
+            SceneManager.LoadSceneAsync(progressionLevel, LoadSceneMode.Additive);
+        }
+
+        else
+
+        {
+            //SceneManager.LoadSceneAsync(levelNumber, LoadSceneMode.Additive);
+            optionalModes.SetActive(true);
+            mainMode.SetActive(true);
+            originalMode.SetActive(false);
+        }
     }
     // Start is called before the first frame update
     void Start()
     {
 
         StartCoroutine(LoadLevel_1());
+
         //levelNumber = 1;
 
         //Vector2 dimensions = Dimensions();
@@ -173,7 +211,7 @@ public class LevelManager : MonoBehaviour
         {
 
 
-            StartCoroutine(RestartLevelCOR(levelNumber));
+            StartCoroutine(RestartLevelCOR(progressionLevel));
 
             
         }
@@ -235,7 +273,10 @@ public class LevelManager : MonoBehaviour
 
         yield return new WaitForSeconds(.1f);
 
-        levelNumber++;
+            PlayerPrefs.SetInt("levels_completed", progressionLevel);
+            PlayerPrefs.Save();
+
+            progressionLevel++;
 
         RestartLevel();
     }
@@ -288,4 +329,70 @@ public class LevelManager : MonoBehaviour
 
         foreground = GameObject.FindGameObjectWithTag("Foreground");
     }
+
+    public void LoadLevelOptional(int levelNumber)
+    {
+        StartCoroutine(StartOptionalLevel(levelNumber));
+    }
+
+    IEnumerator StartOptionalLevel(int level)
+    {
+        Debug.Log("Level Passed!");
+
+        //LeanTween.move(foreground, Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 10f)), 0);
+
+        //yield return new WaitForSeconds(.01f);
+        //LeanTween.scale(foreground, Vector3.one * 50, 2f);
+
+        //yield return new WaitForSeconds(1f);
+
+        //SceneManager.UnloadSceneAsync(level);
+
+        SceneManager.LoadScene(level, LoadSceneMode.Additive);
+
+        yield return new WaitForSeconds(2f);
+
+        //PlayerPrefs.SetInt("levels_completed", progressionLevel);
+        //PlayerPrefs.Save();
+
+        //progressionLevel++;
+
+
+        StartOptionalLevel();
+    }
+
+    public void StartOptionalLevel()
+    {
+        Vector2 dimensions = Dimensions();
+
+        puzzle.width = (int)dimensions.x;
+        puzzle.height = (int)dimensions.y;
+
+        puzzle.shapes = new ShapeElement[puzzle.width, puzzle.height];
+
+        foreach (var shapeElement in GameObject.FindGameObjectsWithTag("Shapes"))
+        {
+            puzzle.shapes[(int)shapeElement.transform.position.x, (int)shapeElement.transform.position.y] = shapeElement.GetComponent<ShapeElement>();
+        }
+
+        foreach (var item in puzzle.shapes)
+        {
+            Debug.Log(item.gameObject.name);
+        }
+
+        StartCoroutine(ShuffleShapes());
+
+        SlideCamera();
+
+
+        puzzle.winCondition = GetWinCondition();
+        puzzle.currentCondition = GetCurrentCondition();
+
+        Camera.main.transform.position = new Vector3(puzzle.width / 2f - .5f, puzzle.height / 2f - .5f, -10);
+
+        //foreground = GameObject.FindGameObjectWithTag("Foreground");
+    }
+
+
+
 }
