@@ -5,9 +5,11 @@ using UnityEngine;
 public class ShapeElement : MonoBehaviour
 {
     public bool[] connection;
-    private int rotation = 90;
 
     public LevelManager levelManager;
+
+    private int rotation = 90;
+
 
     private void Awake()
     {
@@ -27,9 +29,21 @@ public class ShapeElement : MonoBehaviour
 
     void OnMouseDown()
     {
-        if (!levelManager.LevelCompleted()) RotateShapes(.15f);
+        if (!levelManager.LevelCompleted() && !levelManager.RestartScreen_1.activeSelf)
+        {
+            if (transform.rotation.eulerAngles.z % 90 == 0)
+            {
+                //NOTE: Substracting the steps here for the stepped game mode
+                if (levelManager.modeCheck == 2) --levelManager.steps;
+            }
+                RotateShapes(.15f);
+        }
+
+
     }
 
+
+    //NOTE: This is to allign the connection status of the objects with the rotation
     public void AllignConnections()
     {
         bool temp = connection[0];
